@@ -1,5 +1,6 @@
 mod ai;
 mod app;
+mod auth;
 mod config;
 mod session;
 mod tools;
@@ -52,6 +53,18 @@ enum Commands {
     Config,
     /// Clear all saved sessions
     Clear,
+    /// Log in to an AI provider via browser
+    Login {
+        /// Provider name: anthropic, openai
+        #[arg(default_value = "anthropic")]
+        provider: String,
+    },
+    /// Log out of an AI provider (removes saved API key)
+    Logout {
+        /// Provider name: anthropic, openai
+        #[arg(default_value = "anthropic")]
+        provider: String,
+    },
 }
 
 #[tokio::main]
@@ -96,6 +109,14 @@ async fn main() -> Result<()> {
         }
         Some(Commands::Clear) => {
             clear_sessions()?;
+            return Ok(());
+        }
+        Some(Commands::Login { provider }) => {
+            auth::login(&provider).await?;
+            return Ok(());
+        }
+        Some(Commands::Logout { provider }) => {
+            auth::logout(&provider)?;
             return Ok(());
         }
         None => {}
