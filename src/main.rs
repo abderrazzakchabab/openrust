@@ -65,6 +65,11 @@ enum Commands {
         #[arg(default_value = "anthropic")]
         provider: String,
     },
+    /// Set the default AI provider (must already be logged in)
+    Default {
+        /// Provider name: anthropic, openai
+        provider: String,
+    },
 }
 
 #[tokio::main]
@@ -117,6 +122,10 @@ async fn main() -> Result<()> {
         }
         Some(Commands::Logout { provider }) => {
             auth::logout(&provider)?;
+            return Ok(());
+        }
+        Some(Commands::Default { provider }) => {
+            auth::set_default(&provider)?;
             return Ok(());
         }
         None => {}

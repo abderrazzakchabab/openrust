@@ -20,18 +20,27 @@ pub async fn login(provider: &str) -> Result<()> {
 
     let mut config = Config::load()?;
 
-    // Check if already authenticated
+    // If already authenticated, offer to set as default instead of forcing re-login
     let already = match provider {
         "anthropic" => config.provider.anthropic.api_key.is_some(),
         "openai" => config.provider.openai.api_key.is_some(),
         _ => false,
     };
     if already {
-        println!(
-            "Already authenticated with {}. Run `openrust logout {}` first to re-authenticate.",
-            provider_display(provider),
-            provider
-        );
+        if config.provider.default != provider {
+            config.provider.default = provider.to_string();
+            config.save()?;
+            println!(
+                "Already authenticated with {}. Set as default provider.",
+                provider_display(provider)
+            );
+        } else {
+            println!(
+                "Already authenticated with {} (current default). Run `openrust logout {}` first to re-authenticate.",
+                provider_display(provider),
+                provider
+            );
+        }
         return Ok(());
     }
 
@@ -61,16 +70,18 @@ pub async fn login(provider: &str) -> Result<()> {
     // Validate key format
     validate_key(provider, &key)?;
 
-    // Persist to config
+    // Persist key and set as active default provider
     match provider {
-        "anthropic" => config.provider.anthropic.api_key = Some(key.clone()),
-        "openai" => config.provider.openai.api_key = Some(key.clone()),
+        "anthropic" => config.provider.anthropic.api_key = Some(key),
+        "openai" => config.provider.openai.api_key = Some(key),
         _ => {}
     }
+    config.provider.default = provider.to_string();
     config.save()?;
 
-    println!("  {} API key saved to {}", provider_display(provider), Config::config_path().display());
-    println!("  You can now run `openrust` to start chatting.");
+    println!("  ✓ {} connected and set as default provider.", provider_display(provider));
+    println!("  Key saved to {}", Config::config_path().display());
+    println!("  Run `openrust` to start chatting.");
     Ok(())
 }
 
@@ -91,14 +102,63 @@ pub fn logout(provider: &str) -> Result<()> {
         _ => false,
     };
 
+    // If we logged out of the current default, fall back to the other provider
+    if config.provider.default == provider {
+        let fallback = SUPPORTED.iter().find(|&&p| p != provider).copied().unwrap_or("anthropic");
+        config.provider.default = fallback.to_string();
+        println!("Default provider switched to {}.", provider_display(fallback));
+    }
+
     config.save()?;
 
     if had_key {
-        println!("Logged out of {}. API key removed from config.", provider_display(provider));
+        println!("Logged out of {}. API key removed.", provider_display(provider));
     } else {
         println!("{} was not logged in.", provider_display(provider));
     }
 
+    Ok(())
+}
+
+/// Switch the active default provider without re-authenticating.
+pub fn set_default(provider: &str) -> Result<()> {
+    if !SUPPORTED.contains(&provider) {
+        bail!(
+            "Unknown provider '{}'. Supported: {}",
+            provider,
+            SUPPORTED.join(", ")
+        );
+    }
+
+    let mut config = Config::load()?;
+
+    let has_key = match provider {
+        "anthropic" => config.provider.anthropic.api_key.is_some(),
+        "openai" => config.provider.openai.api_key.is_some(),
+        _ => false,
+    };
+
+    if !has_key {
+        bail!(
+            "No API key saved for {}. Run `openrust login {}` first.",
+            provider_display(provider),
+            provider
+        );
+    }
+
+    config.provider.default = provider.to_string();
+    config.save()?;
+
+    let model = match provider {
+        "anthropic" => &config.provider.anthropic.model,
+        "openai" => &config.provider.openai.model,
+        _ => unreachable!(),
+    };
+    println!(
+        "Default provider set to {} (model: {}).",
+        provider_display(provider),
+        model
+    );
     Ok(())
 }
 
@@ -113,9 +173,10 @@ fn validate_key(provider: &str, key: &str) -> Result<()> {
             }
         }
         "openai" => {
+            // OpenAI keys: legacy sk-… or newer sk-proj-… format
             if !key.starts_with("sk-") {
                 bail!(
-                    "Invalid OpenAI API key format (expected 'sk-…'). Got: {}…",
+                    "Invalid OpenAI API key format (expected 'sk-…' or 'sk-proj-…'). Got: {}…",
                     &key[..key.len().min(12)]
                 );
             }
