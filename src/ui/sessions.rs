@@ -30,21 +30,19 @@ pub fn draw_sessions(frame: &mut Frame, app: &App) {
                 let updated = s.updated_at.format("%Y-%m-%d %H:%M").to_string();
                 ListItem::new(vec![
                     Line::from(vec![
-                        Span::styled(
-                            format!("  {} ", i + 1),
-                            Style::default().fg(theme.border),
-                        ),
+                        Span::styled(format!("  {} ", i + 1), Style::default().fg(theme.border)),
                         Span::styled(
                             s.title.clone(),
-                            Style::default()
-                                .fg(theme.fg)
-                                .add_modifier(Modifier::BOLD),
+                            Style::default().fg(theme.fg).add_modifier(Modifier::BOLD),
                         ),
                     ]),
                     Line::from(vec![
                         Span::styled("     ", Style::default()),
                         Span::styled(
-                            format!("{} | {} messages | {} | {}", updated, s.message_count, s.provider, s.model),
+                            format!(
+                                "{} | {} messages | {} | {}",
+                                updated, s.message_count, s.provider, s.model
+                            ),
                             Style::default().fg(theme.border),
                         ),
                     ]),

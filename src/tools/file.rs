@@ -135,8 +135,9 @@ impl FileTool {
 
     pub fn apply_patch(&self, path: &str, old_content: &str, new_content: &str) -> Result<String> {
         let full_path = self.resolve_path(path);
-        let file_content = std::fs::read_to_string(&full_path)
-            .with_context(|| format!("Failed to read file for patching: {}", full_path.display()))?;
+        let file_content = std::fs::read_to_string(&full_path).with_context(|| {
+            format!("Failed to read file for patching: {}", full_path.display())
+        })?;
 
         if !file_content.contains(old_content) {
             anyhow::bail!(

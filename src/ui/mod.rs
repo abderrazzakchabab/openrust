@@ -1,5 +1,6 @@
 pub mod chat;
 pub mod help;
+pub mod permission;
 pub mod sessions;
 pub mod theme;
 
@@ -11,6 +12,7 @@ use ratatui::{
 use crate::app::{App, AppMode};
 use chat::draw_chat;
 use help::draw_help;
+use permission::{draw_permission_prompt, draw_question_prompt};
 use sessions::draw_sessions;
 
 pub fn draw(frame: &mut Frame, app: &App) {
@@ -18,6 +20,14 @@ pub fn draw(frame: &mut Frame, app: &App) {
         AppMode::Chat => draw_chat(frame, app),
         AppMode::SessionList => draw_sessions(frame, app),
         AppMode::Help => draw_help(frame, app),
+        AppMode::PermissionPrompt => {
+            draw_chat(frame, app);
+            draw_permission_prompt(frame, app);
+        }
+        AppMode::QuestionPrompt => {
+            draw_chat(frame, app);
+            draw_question_prompt(frame, app);
+        }
         AppMode::Quit => {}
     }
 }

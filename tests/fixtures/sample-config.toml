@@ -1,0 +1,12 @@
+[provider]
+default = "anthropic"
+
+[rules]
+enabled = true
+inline = "Use concise explanations in tests"
+
+[custom_tools.echo]
+command = "cat"
+description = "Echo stdin"
+enabled = true
+parameters = { type = "object", properties = { value = { type = "string" } } }

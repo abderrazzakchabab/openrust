@@ -27,10 +27,14 @@ impl CallbackServer {
 
             match (req.method.as_str(), req.path.as_str()) {
                 ("GET", "/") | ("GET", "") => {
-                    write_response(req.stream, http_200(&form_html, "text/html; charset=utf-8")).await?;
+                    write_response(req.stream, http_200(&form_html, "text/html; charset=utf-8"))
+                        .await?;
                 }
                 ("POST", "/submit") => {
-                    let key = parse_form_key(&req.body).unwrap_or_default().trim().to_string();
+                    let key = parse_form_key(&req.body)
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string();
                     if !key.is_empty() {
                         write_response(
                             req.stream,
@@ -41,7 +45,8 @@ impl CallbackServer {
                     }
                     // Empty key — redisplay form with error
                     let err_html = build_form_page_with_error(provider, self.port);
-                    write_response(req.stream, http_200(&err_html, "text/html; charset=utf-8")).await?;
+                    write_response(req.stream, http_200(&err_html, "text/html; charset=utf-8"))
+                        .await?;
                 }
                 _ => {
                     write_response(req.stream, http_404()).await?;
@@ -73,7 +78,12 @@ async fn read_request(mut stream: TcpStream) -> Result<ParsedRequest> {
     let method = parts.next().unwrap_or("GET").to_string();
     let path = parts.next().unwrap_or("/").to_string();
 
-    Ok(ParsedRequest { method, path, body, stream })
+    Ok(ParsedRequest {
+        method,
+        path,
+        body,
+        stream,
+    })
 }
 
 async fn write_response(mut stream: TcpStream, response: String) -> Result<()> {
@@ -147,7 +157,10 @@ fn build_form_page(provider: &str, _port: u16) -> String {
 }
 
 fn build_form_page_with_error(provider: &str, _port: u16) -> String {
-    build_form_page_inner(provider, r#"<p class="error">API key cannot be empty. Please try again.</p>"#)
+    build_form_page_inner(
+        provider,
+        r#"<p class="error">API key cannot be empty. Please try again.</p>"#,
+    )
 }
 
 fn build_form_page_inner(provider: &str, extra: &str) -> String {

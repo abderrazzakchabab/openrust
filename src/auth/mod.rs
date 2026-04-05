@@ -53,9 +53,7 @@ pub async fn login(provider: &str) -> Result<()> {
 
     // Open the browser to our local form
     if let Err(e) = open::that(&local_url) {
-        println!(
-            "  Could not open browser automatically: {e}\n  Open manually: {local_url}"
-        );
+        println!("  Could not open browser automatically: {e}\n  Open manually: {local_url}");
     }
 
     println!("  Waiting for key submission in browser…");
@@ -79,7 +77,10 @@ pub async fn login(provider: &str) -> Result<()> {
     config.provider.default = provider.to_string();
     config.save()?;
 
-    println!("  ✓ {} connected and set as default provider.", provider_display(provider));
+    println!(
+        "  ✓ {} connected and set as default provider.",
+        provider_display(provider)
+    );
     println!("  Key saved to {}", Config::config_path().display());
     println!("  Run `openrust` to start chatting.");
     Ok(())
@@ -104,15 +105,25 @@ pub fn logout(provider: &str) -> Result<()> {
 
     // If we logged out of the current default, fall back to the other provider
     if config.provider.default == provider {
-        let fallback = SUPPORTED.iter().find(|&&p| p != provider).copied().unwrap_or("anthropic");
+        let fallback = SUPPORTED
+            .iter()
+            .find(|&&p| p != provider)
+            .copied()
+            .unwrap_or("anthropic");
         config.provider.default = fallback.to_string();
-        println!("Default provider switched to {}.", provider_display(fallback));
+        println!(
+            "Default provider switched to {}.",
+            provider_display(fallback)
+        );
     }
 
     config.save()?;
 
     if had_key {
-        println!("Logged out of {}. API key removed.", provider_display(provider));
+        println!(
+            "Logged out of {}. API key removed.",
+            provider_display(provider)
+        );
     } else {
         println!("{} was not logged in.", provider_display(provider));
     }

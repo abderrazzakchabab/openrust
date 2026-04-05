@@ -24,11 +24,7 @@ impl ShellTool {
         ShellTool { working_dir }
     }
 
-    pub async fn run(
-        &self,
-        command: &str,
-        timeout_secs: Option<u64>,
-    ) -> Result<CommandOutput> {
+    pub async fn run(&self, command: &str, timeout_secs: Option<u64>) -> Result<CommandOutput> {
         let duration = Duration::from_secs(timeout_secs.unwrap_or(DEFAULT_TIMEOUT_SECS));
 
         let fut = Command::new("sh")
